@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>宇宙心願 APP</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --bg2: #111827;
+    --bg3: #1a2035;
+    --border: #2a3350;
+    --text: #f9fafb;
+    --muted: #6b7280;
+    --hint: #4b5563;
+    --teal: #1D9E75;
+    --teal-dim: #1D9E7522;
+    --teal-border: #1D9E7544;
+    --purple: #7F77DD;
+    --purple-dim: #7F77DD22;
+    --purple-border: #7F77DD44;
+    --amber: #BA7517;
+    --amber-dim: #BA751722;
+    --amber-border: #BA751744;
+    --coral: #D85A30;
+    --coral-dim: #D85A3022;
+    --coral-border: #D85A3044;
+    --tab-h: 68px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px 6px;
+    font-size: 12px;
+    color: var(--text);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--bg);
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    display: none;
+    padding-bottom: calc(var(--tab-h) + 16px);
+    min-height: 100vh;
+  }
+  .screen.active { display: block; }
+
+  /* ── NAV TABS ── */
+  .nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 430px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    height: var(--tab-h);
+    padding: 8px 0 12px;
+    z-index: 100;
+  }
+  .nav-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 4px 0;
+    transition: opacity .15s;
+  }
+  .nav-tab:active { opacity: .7; }
+  .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-label { font-size: 10px; color: var(--hint); }
+  .nav-tab.active .nav-label { color: var(--teal); }
+
+  /* ── HEADER ── */
+  .page-header { padding: 20px 20px 12px; }
+  .page-sub { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .page-title { font-size: 24px; font-weight: 700; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .card:active { transform: scale(0.99); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 13px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    transition: filter .15s;
+  }
+  .btn:active { filter: brightness(.85); }
+  .btn-teal { background: var(--teal); color: #fff; }
+  .btn-amber { background: var(--amber); color: #fff; }
+  .btn-purple { background: var(--purple); color: #fff; }
+  .btn-coral { background: var(--coral); color: #fff; }
+  .btn-outline {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--hint);
+    border-radius: 12px;
+  }
+
+  /* ── INPUTS ── */
+  .input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 13px;
+    color: var(--text);
+    font-size: 14px;
+    font-family: 'Noto Sans TC', sans-serif;
+    outline: none;
+    transition: border-color .15s;
+    margin-bottom: 10px;
+  }
+  .input:focus { border-color: var(--muted); }
+  .input::placeholder { color: var(--hint); }
+  textarea.input { resize: none; line-height: 1.6; }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--bg3);
+    border-radius: 24px 24px 0 0;
+    padding: 24px 20px 32px;
+    width: 100%;
+    max-width: 430px;
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(60px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .input-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; display: block; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 9px 18px;
+    border-radius: 20px;
+    font-size: 13px;
+    white-space: nowrap;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity .3s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; }
+
+  /* ══════════════════════════════
+     SCREEN 1 — 願望種植場
+  ══════════════════════════════ */
+  .seeds-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    padding: 0 16px;
+    margin-bottom: 16px;
+  }
+  .seed-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px 14px;
+    cursor: pointer;
+    transition: border-color .2s, transform .15s;
+    min-height: 130px;
+  }
+  .seed-card:active { transform: scale(.97); }
+  .seed-card.growing { border-color: var(--teal); }
+  .seed-card.blooming { border-color: var(--purple); }
+  .plant-icon { font-size: 34px; text-align: center; margin-bottom: 8px; }
+  .wish-text { font-size: 12px; color: #9ca3af; line-height: 1.5; margin-bottom: 10px; }
+  .prog-bar { height: 4px; background: var(--bg2); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+  .prog-fill { height: 100%; border-radius: 2px; transition: width .6s; }
+  .days-label { font-size: 10px; color: var(--hint); }
+  .add-card {
+    background: var(--bg2);
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    min-height: 130px;
+    gap: 8px;
+    transition: border-color .15s;
+  }
+  .add-card:active { border-color: var(--muted); }
+  .add-icon {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--hint); font-size: 22px;
+  }
+  .daily-section { padding: 0 16px; }
+  .section-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; letter-spacing: .03em; }
+  .streak-badge {
+    background: var(--teal-dim);
+    border: 1px solid var(--teal-border);
+    border-radius: 8px;
+    padding: 3px 9px;
+    font-size: 11px;
+    color: var(--teal);
+  }
+  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .card-title { font-size: 13px; font-weight: 500; }
+
+  /* ══════════════════════════════
+     SCREEN 2 — 宇宙訂單
+  ══════════════════════════════ */
+  .filter-row { display: flex; gap: 8px; padding: 0 16px 14px; overflow-x: auto; }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+    font-family: 'Noto Sans TC', sans-serif;
+    transition: all .15s;
+  }
+  .filter-pill.active { background: var(--amber); border-color: var(--amber); color: #fff; }
+  .orders-wrap { padding: 0 16px; }
+  .order-card { cursor: pointer; transition: border-color .2s; }
+  .order-card.selected { border-color: var(--amber); }
+  .order-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .order-wish { font-size: 14px; font-weight: 500; flex: 1; margin-right: 8px; line-height: 1.4; }
+  .status-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 8px; white-space: nowrap; flex-shrink: 0;
+  }
+  .pill-preparing { background: var(--amber-dim); color: #EF9F27; border: 1px solid var(--amber-border); }
+  .pill-shipping   { background: #185FA522; color: #378ADD; border: 1px solid #185FA544; }
+  .pill-delivered  { background: var(--teal-dim); color: var(--teal); border: 1px solid var(--teal-border); }
+  .order-meta { font-size: 11px; color: var(--hint); margin-bottom: 12px; }
+  .track-wrap { margin-bottom: 4px; }
+  .track-dots { display: flex; align-items: center; }
+  .t-dot {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 2px solid var(--border); background: var(--bg2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; flex-shrink: 0; position: relative; z-index: 1;
+  }
+  .t-dot.done { background: var(--amber); border-color: var(--amber); color: #fff; }
+  .t-dot.current { border-color: #EF9F27; box-shadow: 0 0 0 3px var(--amber-dim); }
+  .t-line { flex: 1; height: 2px; background: var(--border); }
+  .t-line.done { background: var(--amber); }
+  .track-names { display: flex; justify-content: space-between; margin-top: 5px; }
+  .t-name { font-size: 9px; color: var(--hint); flex: 1; text-align: center; }
+  .t-name.done { color: var(--amber); }
+  .t-name.current { color: #EF9F27; }
+  .expand-box { overflow: hidden; max-height: 0; transition: max-height .35s ease; }
+  .expand-box.open { max-height: 500px; }
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+  .task-row {
+    background: var(--amber-dim); border: 1px solid var(--amber-border);
+    border-radius: 10px; padding: 11px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .task-icon-wrap { font-size: 18px; flex-shrink: 0; }
+  .task-body { flex: 1; }
+  .task-label-sm { font-size: 10px; color: var(--amber); margin-bottom: 2px; }
+  .task-text-sm { font-size: 12px; color: #d1d5db; line-height: 1.4; }
+  .check-circle {
+    width: 24px; height: 24px; border-radius: 50%;
+    border: 1.5px solid var(--amber-border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; transition: all .15s;
+    font-size: 12px;
+  }
+  .check-circle.on { background: var(--amber); border-color: var(--amber); color: #fff; }
+  .signs-label { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .sign-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 10px; background: var(--bg2); border-radius: 8px; margin-bottom: 6px;
+  }
+  .sign-em { font-size: 16px; }
+  .sign-t { font-size: 12px; color: #9ca3af; flex: 1; }
+  .sign-time { font-size: 10px; color: var(--hint); }
+  .add-sign-btn {
+    width: 100%; background: transparent; border: 1px dashed var(--border);
+    border-radius: 8px; padding: 8px; font-size: 12px; color: var(--hint);
+    cursor: pointer; font-family: 'Noto Sans TC', sans-serif; transition: border-color .15s;
+  }
+  .add-sign-btn:active { border-color: var(--muted); }
+
+  /* ══════════════════════════════
+     SCREEN 3 — 未來的回聲
+  ══════════════════════════════ */
+  .echo-list { padding: 0 16px; }
+  .echo-card { cursor: pointer; }
+  .echo-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .echo-title { font-size: 14px; font-weight: 500; flex: 1; line-height: 1.4; }
+  .echo-date-pill {
+    font-size: 11px; padding: 3px 9px; border-radius: 8px;
+    background: var(--purple-dim); color: var(--purple); border: 1px solid var(--purple-border);
+    white-space: nowrap; flex-shrink: 0; margin-left: 8px;
+  }
+  .echo-preview { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .echo-meta { display: flex; align-items: center; gap: 8px; }
+  .echo-type-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 6px;
+    background: var(--bg2); color: var(--hint); border: 1px solid var(--border);
+  }
+  .echo-ago { font-size: 11px; color: var(--hint); }
+  .echo-expand { overflow: hidden; max-height: 0; transition: max-height .35s ease; }
+  .echo-expand.open { max-height: 400px; }
+  .echo-full-text {
+    background: var(--bg2); border-radius: 10px; padding: 14px;
+    font-size: 13px; color: #d1d5db; line-height: 1.7; margin-top: 12px;
+    border-left: 2px solid var(--purple);
+  }
+  .play-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--purple-dim); border: 1px solid var(--purple-border);
+    border-radius: 10px; padding: 10px 14px; margin-top: 12px; cursor: pointer;
+    transition: filter .15s;
+  }
+  .play-btn:active { filter: brightness(.85); }
+  .play-icon { font-size: 18px; }
+  .play-text { font-size: 13px; color: var(--purple); }
+  .new-echo-btn {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin: 0 16px 16px;
+  }
+  .type-toggle {
+    display: flex; background: var(--bg2); border-radius: 10px; padding: 4px; gap: 4px; margin-bottom: 12px;
+  }
+  .type-btn {
+    flex: 1; padding: 8px; border-radius: 7px; font-size: 12px; font-family: 'Noto Sans TC', sans-serif;
+    border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all .15s;
+  }
+  .type-btn.active { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+
+  /* ══════════════════════════════
+     SCREEN 4 — 反轉硬幣
+  ══════════════════════════════ */
+  .flip-area { padding: 0 16px; }
+  .flip-card {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 20px;
+    margin-bottom: 14px;
+  }
+  .flip-label { font-size: 12px; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+  .flip-result-box {
+    background: var(--bg2); border-radius: 12px; padding: 16px;
+    font-size: 14px; color: #d1d5db; line-height: 1.7; min-height: 60px;
+    border-left: 3px solid var(--coral); display: none;
+  }
+  .flip-result-box.show { display: block; }
+  .flip-btn {
+    width: 100%; background: var(--coral); color: #fff; border: none;
+    border-radius: 12px; padding: 14px; font-size: 14px; font-weight: 500;
+    font-family: 'Noto Sans TC', sans-serif; cursor: pointer; margin-bottom: 14px;
+    transition: filter .15s; display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .flip-btn:active { filter: brightness(.85); }
+  .flip-btn:disabled { filter: brightness(.5); cursor: default; }
+  .saved-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .saved-item {
+    background: var(--bg3); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .saved-neg { font-size: 11px; color: var(--hint); margin-bottom: 4px; }
+  .saved-pos { font-size: 13px; color: var(--coral); line-height: 1.5; }
+  .loading-dots span {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: #fff; margin: 0 2px; animation: bounce .8s infinite;
+  }
+  .loading-dots span:nth-child(2) { animation-delay: .15s; }
+  .loading-dots span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%,80%,100%{transform:scale(.6)} 40%{transform:scale(1)} }
+</style>
+</head>
+<body>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <span id="clock">9:41</span>
+  <span style="display:flex;gap:5px;align-items:center">
+    <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><rect x="0" y="3" width="3" height="8" rx="1" fill="#fff" opacity=".4"/><rect x="4" y="2" width="3" height="9" rx="1" fill="#fff" opacity=".6"/><rect x="8" y="0" width="3" height="11" rx="1" fill="#fff" opacity=".8"/><rect x="12" y="0" width="3" height="11" rx="1" fill="#fff"/></svg>
+    <svg width="16" height="12" viewBox="0 0 16 12" fill="white" opacity=".9"><path d="M8 2.4C5.6 2.4 3.4 3.4 1.8 5L0 3.2C2.2 1.2 5 0 8 0s5.8 1.2 8 3.2L14.2 5C12.6 3.4 10.4 2.4 8 2.4z"/><path d="M8 5.6c-1.6 0-3 .6-4 1.6L2.2 5.4C3.6 4 5.7 3.2 8 3.2s4.4.8 5.8 2.2L12 7.2C11 6.2 9.6 5.6 8 5.6z"/><circle cx="8" cy="10" r="2"/></svg>
+    <svg width="25" height="12" viewBox="0 0 25 12" fill="none"><rect x="0" y="1" width="21" height="10" rx="2" stroke="white" stroke-opacity=".5" stroke-width="1"/><rect x="1" y="2" width="18" height="8" rx="1.5" fill="white"/><path d="M22.5 4.5v3a1.5 1.5 0 000-3z" fill="white" opacity=".4"/></svg>
+  </span>
+</div>
+
+<!-- ════════ SCREEN 1: 願望種植場 ════════ -->
+<div class="screen active" id="screen-garden">
+  <div class="page-header">
+    <div class="page-sub">早安 ✦</div>
+    <div class="page-title">我的花園</div>
+  </div>
+
+  <div class="seeds-grid" id="seeds-grid"></div>
+
+  <div class="daily-section">
+    <div class="section-label">今日澆水</div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" id="water-title">選一個願望澆水</div>
+        <div class="streak-badge" id="streak-badge">🔥 0 天連續</div>
+      </div>
+      <textarea class="input" id="affirmation" rows="2" placeholder="寫下一句肯定的話，或今天值得感謝的小事…"></textarea>
+      <button class="btn btn-teal" id="water-btn" onclick="doWater()" disabled>請先點選上方的願望</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ SCREEN 2: 宇宙訂單 ════════ -->
+<div class="screen" id="screen-order">
+  <div class="page-header">
+    <div class="page-sub">宇宙正在處理中 ✦</div>
+    <div class="page-title">我的訂單</div>
+  </div>
+  <div class="filter-row" id="filter-row">
+    <button class="filter-pill active" onclick="filterOrders('all',this)">全部</button>
+    <button class="filter-pill" onclick="filterOrders('preparing',this)">撿貨中</button>
+    <button class="filter-pill" onclick="filterOrders('shipping',this)">派送中</button>
+    <button class="filter-pill" onclick="filterOrders('delivered',this)">已送達</button>
+  </div>
+  <div class="orders-wrap" id="orders-wrap"></div>
+  <div style="padding:0 16px">
+    <button class="btn btn-amber" onclick="openModal('new-order-modal')">+ 向宇宙下新訂單</button>
+  </div>
+</div>
+
+<!-- ════════ SCREEN 3: 未來的回聲 ════════ -->
+<div class="screen" id="screen-echo">
+  <div class="page-header">
+    <div class="page-sub">來自未來的你 ✦</div>
+    <div class="page-title">時空膠囊</div>
+  </div>
+  <div class="new-echo-btn">
+    <button class="btn btn-purple" onclick="openModal('new-echo-modal')">+ 錄製新的回聲</button>
+  </div>
+  <div class="echo-list" id="echo-list"></div>
+</div>
+
+<!-- ════════ SCREEN 4: 反轉硬幣 ════════ -->
+<div class="screen" id="screen-flip">
+  <div class="page-header">
+    <div class="page-sub">即時轉念 ✦</div>
+    <div class="page-title">反轉硬幣</div>
+  </div>
+  <div class="flip-area">
+    <div class="flip-card">
+      <div class="flip-label" style="color:var(--hint)">😔 你現在的想法</div>
+      <textarea class="input" id="neg-input" rows="3" placeholder="把負面的想法寫在這裡…例：我付不出房租"></textarea>
+      <div class="flip-label" style="color:var(--coral);margin-top:4px">✨ 宇宙幫你翻轉成</div>
+      <div class="flip-result-box" id="flip-result"></div>
+    </div>
+    <button class="flip-btn" id="flip-btn" onclick="doFlip()">
+      <span id="flip-btn-inner">🪙 反轉這個想法</span>
+    </button>
+    <div class="saved-label">已收藏的轉念 (點卡片複製)</div>
+    <div id="saved-flips"></div>
+  </div>
+</div>
+
+<!-- ════════ NAV ════════ -->
+<div class="nav">
+  <div class="nav-tab active" onclick="showScreen('garden',this)">
+    <div class="nav-icon">🌱</div>
+    <div class="nav-label">花園</div>
+  </div>
+  <div class="nav-tab" onclick="showScreen('order',this)">
+    <div class="nav-icon">📦</div>
+    <div class="nav-label">訂單</div>
+  </div>
+  <div class="nav-tab" onclick="showScreen('echo',this)">
+    <div class="nav-icon">🔮</div>
+    <div class="nav-label">回聲</div>
+  </div>
+  <div class="nav-tab" onclick="showScreen('flip',this)">
+    <div class="nav-icon">🪙</div>
+    <div class="nav-label">轉念</div>
+  </div>
+</div>
+
+<!-- ════════ MODALS ════════ -->
+
+<!-- 新願望 modal -->
+<div class="modal-overlay" id="new-seed-modal" onclick="closeModalOutside(event,this)">
+  <div class="modal">
+    <div class="modal-title">種下新願望</div>
+    <div class="modal-sub">選一個圖示，然後寫下你的願望</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px" id="emoji-row">
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'🌰')" class="emoji-opt selected">🌰</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'💼')" class="emoji-opt">💼</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'💰')" class="emoji-opt">💰</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'❤️')" class="emoji-opt">❤️</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'✈️')" class="emoji-opt">✈️</div>
+      <div style="width:40px;height:40px;border-radius:10px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer" onclick="selectEmoji(this,'🎯')" class="emoji-opt">🎯</div>
+    </div>
+    <label class="input-label">你的願望</label>
+    <input class="input" id="new-wish-text" placeholder="我希望…" maxlength="25">
+    <button class="btn btn-teal" onclick="plantWish()">種下這個願望 🌱</button>
+  </div>
+</div>
+
+<!-- 宇宙訂單 modal -->
+<div class="modal-overlay" id="new-order-modal" onclick="closeModalOutside(event,this)">
+  <div class="modal">
+    <div class="modal-title">向宇宙下訂單</div>
+    <div class="modal-sub">用肯定的語氣寫下你的願望</div>
+    <label class="input-label">訂單內容（你的願望）</label>
+    <input class="input" id="order-wish-input" placeholder="例：我輕鬆找到理想的工作" maxlength="25">
+    <label class="input-label">預計到貨（目標日期）</label>
+    <input class="input" id="order-date-input" type="date">
+    <button class="btn btn-amber" onclick="placeOrder()">送出訂單 📦</button>
+  </div>
+</div>
+
+<!-- 小幸運 modal -->
+<div class="modal-overlay" id="sign-modal" onclick="closeModalOutside(event,this)">
+  <div class="modal">
+    <div class="modal-title">記錄一個小幸運</div>
+    <div class="modal-sub">今天發生了什麼讓你覺得「這是徵兆」的小事？</div>
+    <textarea class="input" id="sign-input" rows="3" placeholder="例：今天突然收到老朋友的訊息…"></textarea>
+    <button class="btn btn-amber" onclick="addSign()">確認收到這份禮物 ✦</button>
+  </div>
+</div>
+
+<!-- 新回聲 modal -->
+<div class="modal-overlay" id="new-echo-modal" onclick="closeModalOutside(event,this)">
+  <div class="modal">
+    <div class="modal-title">錄製回聲</div>
+    <div class="modal-sub">以「謝謝你，我已經度過了」的口吻寫給現在的自己</div>
+    <label class="input-label">標題（這個回聲關於什麼？）</label>
+    <input class="input" id="echo-title-input" placeholder="例：關於那份工作" maxlength="20">
+    <label class="input-label">內容</label>
+    <textarea class="input" id="echo-content-input" rows="4" placeholder="謝謝你堅持了下來。我現在過得很好，那件事已經順利解決了…"></textarea>
+    <label class="input-label">什麼時候彈出這則回聲？</label>
+    <input class="input" id="echo-date-input" type="date">
+    <button class="btn btn-purple" onclick="saveEcho()">封存這個膠囊 🔮</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── 工具函式 ──────────────────────────────
+function toast(msg, color) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || 'var(--teal)';
+  t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2600);
+}
+
+function showScreen(name, el) {
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(function(t){ t.classList.remove('active'); });
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+function closeModalOutside(e, overlay) {
+  if (e.target === overlay) overlay.classList.remove('open');
+}
+
+// 時鐘
+function updateClock() {
+  var n = new Date();
+  var h = n.getHours().toString().padStart(2,'0');
+  var m = n.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clock').textContent = h + ':' + m;
+}
+setInterval(updateClock, 10000);
+updateClock();
+
+// ── 資料 ─────────────────────────────────
+var seeds = [
+  { id: 1, emoji: '🌱', wish: '順利付清這個月的房租', days: 9, prog: 45, color: 'teal', watered: false },
+  { id: 2, emoji: '🌿', wish: '找到一份喜歡的工作', days: 21, prog: 72, color: 'purple', watered: false },
+  { id: 3, emoji: '🌰', wish: '學會一首想彈的曲子', days: 4, prog: 20, color: 'amber', watered: false }
+];
+var selectedSeedId = null;
+var selectedEmoji = '🌰';
+
+var orders = [
+  { id:'COS-20240301', wish:'找到心儀的工作機會', status:'shipping', taskDone:false, task:'今天投遞一份履歷，或更新一個技能', taskIcon:'📄', signs:[{emoji:'✨',text:'朋友突然推薦了一個職缺給我',time:'昨天'}], date:'2025-06-01' },
+  { id:'COS-20240215', wish:'順利付清這個月的房租', status:'preparing', taskDone:false, task:'整理桌面，為豐盛創造空間', taskIcon:'🧹', signs:[], date:'2025-05-31' },
+  { id:'COS-20240101', wish:'和另一半關係更親密', status:'delivered', taskDone:true, task:'今天主動說一句感謝的話', taskIcon:'💌', signs:[{emoji:'🌹',text:'他突然買了我最喜歡的甜點',time:'3天前'}], date:'2025-04-14' }
+];
+var expandedOrderId = null;
+var orderFilter = 'all';
+var signingOrderId = null;
+
+var echos = [
+  { id:1, title:'關於那份工作', preview:'謝謝你沒有放棄，我現在每天都很期待去上班…', content:'謝謝你沒有放棄，我現在每天都很期待去上班。你不知道當時你有多勇敢。現在一切都很順利，薪水也比以前好多了。', type:'text', created:'2025-04-01', popup:'2025-07-01' },
+  { id:2, title:'關於財務的焦慮', preview:'我現在財務狀況非常穩定，那個月真的很難，但我撐過來了…', content:'我現在財務狀況非常穩定，那個月真的很難，但我撐過來了。帳單全部付清了，還有一筆小小的存款。謝謝你相信一切都會好轉。', type:'text', created:'2025-03-15', popup:'2025-06-15' }
+];
+var expandedEchoId = null;
+
+var savedFlips = [];
+
+// ── SCREEN 1：願望種植場 ──────────────────
+
+function renderSeeds() {
+  var grid = document.getElementById('seeds-grid');
+  grid.innerHTML = '';
+  seeds.forEach(function(s) {
+    var cls = s.color === 'teal' ? 'growing' : s.color === 'purple' ? 'blooming' : '';
+    var fillColor = s.color === 'teal' ? '#1D9E75' : s.color === 'purple' ? '#7F77DD' : '#BA7517';
+    var isSelected = selectedSeedId === s.id;
+    var div = document.createElement('div');
+    div.className = 'seed-card ' + cls + (isSelected ? ' selected' : '');
+    div.style.borderColor = isSelected ? fillColor : '';
+    div.onclick = function() { selectSeed(s.id); };
+    div.innerHTML =
+      '<div class="plant-icon">' + (s.prog >= 80 ? '🌸' : s.prog >= 50 ? '🌿' : s.emoji) + '</div>' +
+      '<div class="wish-text">' + s.wish + '</div>' +
+      '<div class="prog-bar"><div class="prog-fill" style="width:' + s.prog + '%;background:' + fillColor + '"></div></div>' +
+      '<div class="days-label">連續澆水 ' + s.days + ' 天</div>';
+    grid.appendChild(div);
+  });
+  var add = document.createElement('div');
+  add.className = 'add-card';
+  add.onclick = function() { openModal('new-seed-modal'); };
+  add.innerHTML = '<div class="add-icon">+</div><div style="font-size:12px;color:var(--hint)">種下新願望</div>';
+  grid.appendChild(add);
+}
+
+function selectSeed(id) {
+  selectedSeedId = id;
+  var s = seeds.find(function(x){ return x.id === id; });
+  document.getElementById('water-title').textContent = '為「' + s.wish.slice(0,8) + '…」澆水';
+  document.getElementById('streak-badge').textContent = '🔥 ' + s.days + ' 天連續';
+  var btn = document.getElementById('water-btn');
+  btn.textContent = s.watered ? '今日已澆水 ✓' : '為願望澆水 🌿';
+  btn.disabled = s.watered;
+  renderSeeds();
+}
+
+function doWater() {
+  var txt = document.getElementById('affirmation').value.trim();
+  if (!txt) { toast('請先寫下肯定的話 ✍️', 'var(--muted)'); return; }
+  var s = seeds.find(function(x){ return x.id === selectedSeedId; });
+  if (!s || s.watered) return;
+  s.watered = true;
+  s.days += 1;
+  s.prog = Math.min(s.prog + 5, 100);
+  document.getElementById('water-btn').textContent = '今日已澆水 ✓';
+  document.getElementById('water-btn').disabled = true;
+  document.getElementById('streak-badge').textContent = '🔥 ' + s.days + ' 天連續';
+  renderSeeds();
+  toast('澆水成功！願望繼續生長中 🌱', 'var(--teal)');
+}
+
+function selectEmoji(el, emoji) {
+  selectedEmoji = emoji;
+  document.querySelectorAll('.emoji-opt').forEach(function(e){ e.style.borderColor = 'var(--border)'; });
+  el.style.borderColor = 'var(--purple)';
+}
+
+function plantWish() {
+  var txt = document.getElementById('new-wish-text').value.trim();
+  if (!txt) { toast('請填寫你的願望', 'var(--muted)'); return; }
+  seeds.push({ id: Date.now(), emoji: selectedEmoji, wish: txt, days: 0, prog: 0, color: 'teal', watered: false });
+  document.getElementById('new-wish-text').value = '';
+  closeModal('new-seed-modal');
+  renderSeeds();
+  toast('願望已種下！每天澆水讓它成長 🌰', 'var(--teal)');
+}
+
+// ── SCREEN 2：宇宙訂單 ───────────────────
+
+var statusMap = {
+  preparing: { label:'撿貨中', pill:'pill-preparing', steps:['下單','撿貨中','派送中','已送達'], cur:1 },
+  shipping:  { label:'派送中', pill:'pill-shipping',  steps:['下單','撿貨中','派送中','已送達'], cur:2 },
+  delivered: { label:'已送達', pill:'pill-delivered', steps:['下單','撿貨中','派送中','已送達'], cur:3 }
+};
+
+function renderOrders() {
+  var wrap = document.getElementById('orders-wrap');
+  wrap.innerHTML = '';
+  var list = orders.filter(function(o){ return orderFilter === 'all' || o.status === orderFilter; });
+  list.forEach(function(o) {
+    var sm = statusMap[o.status];
+    var isOpen = expandedOrderId === o.id;
+    var card = document.createElement('div');
+    card.className = 'card order-card' + (isOpen ? ' selected' : '');
+    card.onclick = function() { expandedOrderId = isOpen ? null : o.id; renderOrders(); };
+
+    // Track bar
+    var dots = '<div class="track-dots">';
+    sm.steps.forEach(function(s, i) {
+      if (i > 0) dots += '<div class="t-line' + (i <= sm.cur ? ' done' : '') + '"></div>';
+      var cls = i < sm.cur ? 'done' : i === sm.cur ? 'current' : '';
+      dots += '<div class="t-dot ' + cls + '">' + (i < sm.cur ? '✓' : '') + '</div>';
+    });
+    dots += '</div><div class="track-names">';
+    sm.steps.forEach(function(s, i) {
+      var cls = i < sm.cur ? 'done' : i === sm.cur ? 'current' : '';
+      dots += '<div class="t-name ' + cls + '">' + s + '</div>';
+    });
+    dots += '</div>';
+
+    // Signs
+    var signsHtml = '';
+    o.signs.forEach(function(sg) {
+      signsHtml += '<div class="sign-row"><span class="sign-em">' + sg.emoji + '</span><span class="sign-t">' + sg.text + '</span><span class="sign-time">' + sg.time + '</span></div>';
+    });
+
+    var expand = '<div class="expand-box' + (isOpen ? ' open' : '') + '">' +
+      '<div class="divider"></div>' +
+      '<div class="task-row">' +
+        '<div class="task-icon-wrap">' + o.taskIcon + '</div>' +
+        '<div class="task-body"><div class="task-label-sm">今日任務</div><div class="task-text-sm">' + o.task + '</div></div>' +
+        '<div class="check-circle' + (o.taskDone ? ' on' : '') + '" onclick="toggleTask(event,\'' + o.id + '\')">' + (o.taskDone ? '✓' : '') + '</div>' +
+      '</div>' +
+      '<div class="divider"></div>' +
+      '<div class="signs-label">小幸運紀錄（' + o.signs.length + ' 個徵兆）</div>' +
+      signsHtml +
+      '<button class="add-sign-btn" onclick="openSignModal(event,\'' + o.id + '\')">+ 記錄今天的小幸運</button>' +
+    '</div>';
+
+    card.innerHTML =
+      '<div class="order-top"><div class="order-wish">' + o.wish + '</div><div class="status-pill ' + sm.pill + '">' + sm.label + '</div></div>' +
+      '<div class="order-meta">訂單編號 ' + o.id + ' ・ 目標 ' + o.date + '</div>' +
+      '<div class="track-wrap">' + dots + '</div>' +
+      expand;
+    wrap.appendChild(card);
+  });
+}
+
+function filterOrders(f, el) {
+  orderFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(function(p){ p.classList.remove('active'); });
+  el.classList.add('active');
+  renderOrders();
+}
+
+function placeOrder() {
+  var w = document.getElementById('order-wish-input').value.trim();
+  var d = document.getElementById('order-date-input').value;
+  if (!w) { toast('請填寫你的願望', 'var(--muted)'); return; }
+  var id = 'COS-' + Date.now().toString().slice(-8);
+  orders.unshift({ id:id, wish:w, status:'preparing', taskDone:false, task:'今天對鏡子微笑，相信它已在路上', taskIcon:'🪞', signs:[], date: d || '未設定' });
+  document.getElementById('order-wish-input').value = '';
+  closeModal('new-order-modal');
+  expandedOrderId = id;
+  renderOrders();
+  toast('訂單已送出！宇宙開始撿貨 📦', 'var(--amber)');
+}
+
+function toggleTask(e, id) {
+  e.stopPropagation();
+  var o = orders.find(function(x){ return x.id === id; });
+  if (o) { o.taskDone = !o.taskDone; renderOrders(); toast(o.taskDone ? '任務完成！宇宙收到了 ✨' : '已取消', 'var(--amber)'); }
+}
+
+function openSignModal(e, id) {
+  e.stopPropagation();
+  signingOrderId = id;
+  document.getElementById('sign-input').value = '';
+  openModal('sign-modal');
+}
+
+function addSign() {
+  var t = document.getElementById('sign-input').value.trim();
+  if (!t) { toast('請描述這個小幸運', 'var(--muted)'); return; }
+  var o = orders.find(function(x){ return x.id === signingOrderId; });
+  if (o) {
+    var emojis = ['✨','🌟','🍀','🌈','🎯','💫','🌸'];
+    o.signs.unshift({ emoji: emojis[Math.floor(Math.random() * emojis.length)], text: t, time: '剛剛' });
+    if (o.status === 'preparing' && o.signs.length >= 2) o.status = 'shipping';
+    closeModal('sign-modal');
+    renderOrders();
+    toast('小幸運已記錄！✨', 'var(--amber)');
+  }
+}
+
+// ── SCREEN 3：未來的回聲 ─────────────────
+
+function renderEchos() {
+  var list = document.getElementById('echo-list');
+  list.innerHTML = '';
+  echos.forEach(function(e) {
+    var isOpen = expandedEchoId === e.id;
+    var card = document.createElement('div');
+    card.className = 'card echo-card';
+    card.onclick = function() { expandedEchoId = isOpen ? null : e.id; renderEchos(); };
+    card.innerHTML =
+      '<div class="echo-top"><div class="echo-title">' + e.title + '</div><div class="echo-date-pill">📅 ' + e.popup + '</div></div>' +
+      '<div class="echo-preview">' + e.preview + '</div>' +
+      '<div class="echo-meta"><div class="echo-type-badge">文字</div><span class="echo-ago">建立於 ' + e.created + '</span></div>' +
+      '<div class="echo-expand' + (isOpen ? ' open' : '') + '">' +
+        '<div class="echo-full-text">' + e.content + '</div>' +
+        '<div class="play-btn" onclick="copyEcho(event,' + e.id + ')"><span class="play-icon">📋</span><span class="play-text">複製全文</span></div>' +
+      '</div>';
+    list.appendChild(card);
+  });
+}
+
+function copyEcho(e, id) {
+  e.stopPropagation();
+  var ec = echos.find(function(x){ return x.id === id; });
+  if (ec && navigator.clipboard) {
+    navigator.clipboard.writeText(ec.content);
+    toast('已複製到剪貼簿 📋', 'var(--purple)');
+  } else {
+    toast('請手動選取文字複製', 'var(--muted)');
+  }
+}
+
+function saveEcho() {
+  var title = document.getElementById('echo-title-input').value.trim();
+  var content = document.getElementById('echo-content-input').value.trim();
+  var date = document.getElementById('echo-date-input').value;
+  if (!title || !content) { toast('請填寫標題和內容', 'var(--muted)'); return; }
+  var today = new Date().toISOString().split('T')[0];
+  echos.unshift({ id: Date.now(), title: title, preview: content.slice(0, 40) + '…', content: content, type: 'text', created: today, popup: date || '未設定' });
+  document.getElementById('echo-title-input').value = '';
+  document.getElementById('echo-content-input').value = '';
+  closeModal('new-echo-modal');
+  renderEchos();
+  toast('膠囊已封存！等待時機彈出 🔮', 'var(--purple)');
+}
+
+// ── SCREEN 4：反轉硬幣 ──────────────────
+
+function renderSavedFlips() {
+  var wrap = document.getElementById('saved-flips');
+  wrap.innerHTML = '';
+  if (savedFlips.length === 0) {
+    wrap.innerHTML = '<div style="font-size:13px;color:var(--hint);padding:16px 0 8px;text-align:center">還沒有收藏的轉念，試試反轉你的第一個想法</div>';
+    return;
+  }
+  savedFlips.forEach(function(f) {
+    var item = document.createElement('div');
+    item.className = 'saved-item';
+    item.style.cursor = 'pointer';
+    item.onclick = function() {
+      if (navigator.clipboard) navigator.clipboard.writeText(f.pos);
+      toast('已複製正向語句 ✨', 'var(--coral)');
+    };
+    item.innerHTML = '<div class="saved-neg">' + f.neg + '</div><div class="saved-pos">' + f.pos + '</div>';
+    wrap.appendChild(item);
+  });
+}
+
+var positiveTemplates = [
+  function(neg) {
+    if (neg.includes('付不出') || neg.includes('錢') || neg.includes('財')) return '我有充足的財源支持我理想的生活，豐盛正在流向我。';
+    if (neg.includes('工作') || neg.includes('失業') || neg.includes('找不到')) return '理想的工作機會正在尋找我，我已經準備好迎接它。';
+    if (neg.includes('孤單') || neg.includes('沒人') || neg.includes('寂寞')) return '我值得被深深愛著，真正的連結正在我的生命中顯現。';
+    if (neg.includes('生病') || neg.includes('健康') || neg.includes('身體')) return '我的身體充滿活力與健康，每一天都在恢復與成長。';
+    if (neg.includes('沒時間') || neg.includes('太忙') || neg.includes('壓力')) return '我輕鬆地處理生活中的每一件事，時間總是剛剛好。';
+    return '一切都在完美的時機以完美的方式顯化。我信任宇宙的安排。';
+  }
+];
+
+function doFlip() {
+  var neg = document.getElementById('neg-input').value.trim();
+  if (!neg) { toast('請先寫下你的負面想法', 'var(--muted)'); return; }
+
+  var btn = document.getElementById('flip-btn');
+  var inner = document.getElementById('flip-btn-inner');
+  var result = document.getElementById('flip-result');
+
+  btn.disabled = true;
+  inner.innerHTML = '<span class="loading-dots"><span></span><span></span><span></span></span>';
+  result.classList.remove('show');
+
+  setTimeout(function() {
+    var pos = positiveTemplates[0](neg);
+    result.textContent = pos;
+    result.classList.add('show');
+    btn.disabled = false;
+    inner.textContent = '🪙 再反轉一次';
+    savedFlips.unshift({ neg: neg, pos: pos });
+    if (savedFlips.length > 10) savedFlips.pop();
+    renderSavedFlips();
+    toast('轉念成功！點下方卡片可複製 ✨', 'var(--coral)');
+  }, 1200);
+}
+
+// ── 初始化 ───────────────────────────────
+renderSeeds();
+renderOrders();
+renderEchos();
+renderSavedFlips();
+
+// 設定今天日期為預設值
+var todayStr = new Date().toISOString().split('T')[0];
+document.getElementById('order-date-input').value = todayStr;
+document.getElementById('echo-date-input').value = todayStr;
+</script>
+</body>
+</html>
